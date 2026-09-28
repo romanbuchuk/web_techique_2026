@@ -1,0 +1,20 @@
+#!/bin/sh
+# Pre-commit hook for the repository.
+# Runs lint-staged for each sub-project that defines it, scoped to files
+# staged within that sub-project's directory.
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+run_lint_staged() {
+  project_dir="$1"
+  if [ -f "$REPO_ROOT/$project_dir/package.json" ] && \
+     grep -q '"lint-staged"' "$REPO_ROOT/$project_dir/package.json"; then
+    if git diff --cached --name-only --diff-filter=ACM | grep -q "^$project_dir/"; then
+      echo "Running lint-staged in $project_dir..."
+      (cd "$REPO_ROOT/$project_dir" && npx lint-staged)
+    fi
+  fi
+}
+
+run_lint_staged "my-app"
